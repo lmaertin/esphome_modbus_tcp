@@ -1,9 +1,10 @@
 #pragma once
 
 #include "esphome/core/component.h"
-#include <WiFiClient.h>
-#include "AsyncTCP.h"
 #include <vector>
+#include "lwip/sockets.h"
+#include "lwip/netdb.h"
+#include "lwip/err.h"
 
 namespace esphome {
 namespace modbustcp {
@@ -50,10 +51,10 @@ class ModbusTCP :  public Component {
   uint32_t last_send_{0};
   std::vector<ModbusDevice *> devices_;
   uint16_t Transaction_Identifier = 0;
-  WiFiClient client;
+  int tcp_socket_{-1};  // ESP-IDF socket descriptor
   uint16_t port_;
   std::string host_;
-  AsyncClient tcp_client;
+  bool connection_established_{false};
    
 };
 
