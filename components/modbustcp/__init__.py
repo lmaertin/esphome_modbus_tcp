@@ -16,7 +16,9 @@ ModbusTCP = modbustcp_ns.class_("ModbusTCP", cg.Component)
 ModbusDevice = modbustcp_ns.class_("ModbusDevice")
 
 MULTI_CONF = True
-AUTO_LOAD = ["async_tcp"]
+# Note: async_tcp AUTO_LOAD removed to support both Arduino and ESP-IDF frameworks
+# Arduino framework can optionally use AsyncTCP (add to lib_deps manually if desired)
+# ESP-IDF framework uses native lwip sockets (no external dependency needed)
 
 CONF_MODBUSTCP_ID = "modbustcp_id"
 CONF_SEND_WAIT_TIME = "send_wait_time"
