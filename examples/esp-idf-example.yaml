@@ -1,0 +1,97 @@
+# Example configuration for ESP-IDF framework
+# This uses native lwip sockets (no external dependencies)
+
+substitutions:
+  device_name: modbus-client-espidf
+  friendly_name: "Modbus Client (ESP-IDF)"
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+    # ESP-IDF specific settings can go here
+    # version: recommended  # Use recommended ESP-IDF version
+
+# WiFi configuration
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "${device_name} Fallback"
+    password: !secret ap_password
+
+captive_portal:
+
+# Enable logging
+logger:
+  level: DEBUG
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  password: !secret ota_password
+
+# External component configuration
+external_components:
+  - source: github://lmaertin/esphome_modbus_tcp
+    refresh: 0s
+
+# Modbus TCP configuration
+modbustcp:
+  - id: modbus1
+    host: 192.168.1.100  # IP address of your Modbus TCP server
+    port: 502             # Standard Modbus TCP port (default)
+
+# Modbus controller configuration
+modbustcp_controller:
+  - id: modbus_device
+    modbustcp_id: modbus1
+    address: 1           # Modbus Unit ID
+    update_interval: 5s  # Poll interval
+
+# Example sensor reading holding register
+sensor:
+  - platform: modbustcp_controller
+    modbustcp_controller_id: modbus_device
+    name: "Temperature"
+    address: 1000        # Register address
+    value_type: FP32     # 32-bit float
+    register_type: read  # Read input registers
+    accuracy_decimals: 1
+    unit_of_measurement: "°C"
+
+  - platform: modbustcp_controller
+    modbustcp_controller_id: modbus_device
+    name: "Voltage"
+    address: 1002
+    value_type: U_WORD   # 16-bit unsigned integer
+    register_type: read
+    accuracy_decimals: 0
+    unit_of_measurement: "V"
+
+# Example binary sensor reading discrete input
+binary_sensor:
+  - platform: modbustcp_controller
+    modbustcp_controller_id: modbus_device
+    name: "Status Alarm"
+    register_type: read
+    address: 0x0100
+
+# Example switch controlling a coil
+switch:
+  - platform: modbustcp_controller
+    modbustcp_controller_id: modbus_device
+    id: relay_1
+    register_type: coil
+    address: 0
+    name: "Relay 1"
+    bitmask: 1

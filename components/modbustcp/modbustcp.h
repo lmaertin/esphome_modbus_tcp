@@ -2,9 +2,24 @@
 
 #include "esphome/core/component.h"
 #include <vector>
-#include "lwip/sockets.h"
-#include "lwip/netdb.h"
-#include "lwip/err.h"
+
+// Conditional includes based on framework
+// Arduino framework: Use AsyncTCP for non-blocking async operations
+// ESP-IDF framework: Use lwip sockets for synchronous operations
+#ifdef ARDUINO
+  // Arduino framework - AsyncTCP support
+  #ifdef ESP32
+    #include <AsyncTCP.h>
+  #elif defined(ESP8266)
+    #include <ESPAsyncTCP.h>
+  #endif
+  #define MODBUSTCP_USE_ASYNC
+#else
+  // ESP-IDF framework - use lwip sockets
+  #include "lwip/sockets.h"
+  #include "lwip/netdb.h"
+  #include "lwip/err.h"
+#endif
 
 namespace esphome {
 namespace modbustcp {
@@ -44,6 +59,18 @@ class ModbusTCP :  public Component {
 
  protected:
  
+#ifdef MODBUSTCP_USE_ASYNC
+  // Arduino AsyncTCP client
+  AsyncClient *async_client_{nullptr};
+  void on_async_connect_(void *arg, AsyncClient *client);
+  void on_async_disconnect_(void *arg, AsyncClient *client);
+  void on_async_error_(void *arg, AsyncClient *client, int8_t error);
+  void on_async_data_(void *arg, AsyncClient *client, void *data, size_t len);
+#else
+  // ESP-IDF socket descriptor
+  int tcp_socket_{-1};
+  bool connection_established_{false};
+#endif
   
   //bool parse_modbus_byte_(uint8_t byte);
   uint16_t send_wait_time_{250};
@@ -51,10 +78,8 @@ class ModbusTCP :  public Component {
   uint32_t last_send_{0};
   std::vector<ModbusDevice *> devices_;
   uint16_t Transaction_Identifier = 0;
-  int tcp_socket_{-1};  // ESP-IDF socket descriptor
   uint16_t port_;
   std::string host_;
-  bool connection_established_{false};
    
 };
 
