@@ -1,22 +1,53 @@
-# Universal Modbus-TCP for ESPHome (ESP-IDF changes)
+# Universal Modbus-TCP for ESPHome
+
+This component provides Modbus TCP client functionality for ESPHome and supports both Arduino and ESP-IDF frameworks.
 
 Port is optional (default: 502)
 
-This fork adapts the Modbus-TCP integration to work when building ESPHome projects using the ESP-IDF framework for ESP32. The main changes are related to using a TCP transport compatible with ESP-IDF and documenting that the esp-idf framework must be selected in your ESPHome YAML.
+## Framework Support
 
-Important: set the esp32.framework type to esp-idf in your ESPHome configuration when using this integration.
+This component now supports **both** ESP32 frameworks:
 
-Example configuration:
+### Arduino Framework (with AsyncTCP)
+- Uses the AsyncTCP library for non-blocking, asynchronous TCP operations
+- Best for projects already using Arduino framework
+- To use AsyncTCP on Arduino, add it to your `platformio_options`:
+
+```yaml
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+  platformio_options:
+    lib_deps:
+      - esphome/AsyncTCP-esphome@^2.0.0
+```
+
+### ESP-IDF Framework (with lwip sockets)
+- Uses native lwip sockets for synchronous TCP operations
+- No external dependencies required
+- Recommended for ESP-IDF projects
+
+```yaml
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+```
+
+The component automatically detects which framework is being used at compile time and uses the appropriate TCP implementation.
+
+## Example Configuration
 
 ```yaml
 external_components:
-  - source: github://creepystefan/esphome_tcp
+  - source: github://lmaertin/esphome_modbus_tcp
     refresh: 0s
 
 esp32:
   board: esp32dev
   framework:
-    type: esp-idf
+    type: esp-idf    # or 'arduino' - both are supported
 
 modbustcp:
   - id: modbustesttcp
@@ -72,14 +103,56 @@ Value types (optional): the datatype of Modbus register data. The default Modbus
 
 Defaults to U_WORD.
 
-Changes and notes for ESP-IDF:
+## Framework Implementation Details
 
-- Build with ESPHome using esp-idf by setting esp32.framework.type: esp-idf.
-- This integration uses an external TCP transport (creepystefan/esphome_tcp) that supports ESP-IDF. Ensure the external component is available and compatible with your ESPHome version.
-- The networking layer has been adapted to use the TCP transport compatible with ESP-IDF; function calls and initialization are different from Arduino/ESP8266 builds.
-- If you encounter build errors, verify that all external components used in your YAML support the esp-idf framework and that your ESPHome/ESP-IDF toolchain is installed correctly.
+### Arduino Framework
+- **Transport**: AsyncTCP library (non-blocking, event-driven)
+- **Benefits**: 
+  - Asynchronous I/O doesn't block the main loop
+  - Better for complex projects with multiple components
+  - Event-driven callbacks for connection management
+- **Requirements**: AsyncTCP library (automatically managed if added to lib_deps)
 
-Useful link:
-https://ipc2u.de/artikel/wissenswertes/detaillierte-beschreibung-des-modbus-tcp-protokolls-mit-befehlsbeispielen/
+### ESP-IDF Framework
+- **Transport**: lwip sockets (synchronous, non-blocking sockets)
+- **Benefits**:
+  - No external dependencies
+  - Native ESP-IDF support
+  - Simpler implementation for straightforward use cases
+- **Requirements**: None (lwip is part of ESP-IDF)
 
-(End of README)
+The component will log which transport is being used during startup. Look for lines like:
+- `Transport: AsyncTCP (Arduino framework)` or
+- `Transport: lwip sockets (ESP-IDF framework)`
+
+## Migration Notes
+
+### From ESP-IDF only version
+This component now supports both frameworks. Existing ESP-IDF configurations will continue to work without changes.
+
+### For Arduino Framework users
+To enable AsyncTCP support when using Arduino framework:
+1. Make sure you're using Arduino framework (not ESP-IDF)
+2. Add AsyncTCP to your platformio lib_deps (see example above)
+3. The component will automatically use AsyncTCP when the `ARDUINO` macro is defined
+
+## Troubleshooting
+
+### Build errors about missing AsyncTCP
+- If building with Arduino framework and you see AsyncTCP errors, add the library to lib_deps
+- If building with ESP-IDF, AsyncTCP is not used and not required
+
+### Connection issues
+- Ensure your Modbus TCP server is reachable
+- Check network configuration and firewall settings
+- Review ESPHome logs for connection status messages
+
+## Legacy Notes
+
+**Note**: This component was previously adapted specifically for ESP-IDF. It now supports both Arduino and ESP-IDF frameworks through conditional compilation.
+
+## Useful Links
+
+- [Modbus TCP Protocol Description](https://ipc2u.de/artikel/wissenswertes/detaillierte-beschreibung-des-modbus-tcp-protokolls-mit-befehlsbeispielen/)
+- [ESPHome Documentation](https://esphome.io/)
+- [AsyncTCP Library](https://github.com/me-no-dev/AsyncTCP)
