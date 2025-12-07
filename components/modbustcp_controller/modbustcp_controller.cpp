@@ -1,6 +1,7 @@
 #include "modbustcp_controller.h"
 #include "esphome/core/application.h"
 #include "esphome/core/log.h"
+#include "esp_timer.h"
 
 namespace esphome {
 namespace modbustcp_controller {
@@ -17,7 +18,7 @@ void ModbusTCPController::setup() { this->create_register_ranges_(); }
 */
 
 bool ModbusTCPController::send_next_command_() {
-  uint32_t last_send = millis() - this->last_command_timestamp_;
+  uint32_t last_send = (esp_timer_get_time() / 1000) - this->last_command_timestamp_;
 
   if ((last_send > this->command_throttle_) && !waiting_for_response() && !this->command_queue_.empty()) {
     auto &command = this->command_queue_.front();
@@ -44,7 +45,7 @@ bool ModbusTCPController::send_next_command_() {
                command->register_address, command->register_count);
       command->send();
 
-      this->last_command_timestamp_ = millis();
+      this->last_command_timestamp_ = esp_timer_get_time() / 1000;
 
       this->command_sent_callback_.call((int) command->function_code, command->register_address);
 

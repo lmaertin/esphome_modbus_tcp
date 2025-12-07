@@ -13,7 +13,7 @@ external_components:
 esp32:
   board: esp32dev
   framework:
-    type: arduino
+    type: esp-idf
 
 modbustcp:
   - id: modbustesttcp
