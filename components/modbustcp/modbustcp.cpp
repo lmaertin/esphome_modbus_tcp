@@ -67,7 +67,7 @@ void ModbusTCP::on_async_data_(void *arg, AsyncClient *client, void *data, size_
 
   // Check for Modbus error response
   if ((byte1[7] & 0x80) == 0x80) {
-    ESP_LOGE(TAG,"Error:"); 
+    ESP_LOGE(TAG, "Error:"); 
     if (byte1[8]  == 0x01) {
       ESP_LOGE(TAG,"Failure Code 0x01 ILLEGAL FUNCTION");
     }
@@ -90,7 +90,7 @@ void ModbusTCP::on_async_data_(void *arg, AsyncClient *client, void *data, size_
   }
 
   uint8_t bytelen_len = 9;
-  std::vector<uint8_t> modbus_data(byte1 + bytelen_len, byte1 + bytelen_len + 9);
+  std::vector<uint8_t> modbus_data(byte1 + bytelen_len, byte1 + bytelen_len + data_len);
 
   ESP_LOGV(TAG, "Incoming Data %02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X",
                       modbus_data[0], modbus_data[1], modbus_data[2], modbus_data[3], modbus_data[4], 
@@ -321,7 +321,7 @@ void ModbusTCP::loop() {
     uint8_t bytelen_len = 9;
     std::vector<uint8_t> data(byte1 + bytelen_len, byte1 + bytelen_len + 9);
 
-    ESP_LOGV(TAG, "Incomming Data %02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X",
+    ESP_LOGV(TAG, "Incoming Data %02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X",
                         data[0], data[1], data[2], data[3], data[4], 
                         data[5], data[6], data[7], data[8]);
     
